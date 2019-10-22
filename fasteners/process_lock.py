@@ -104,6 +104,8 @@ class _InterProcessLock(object):
         self.offset = offset
         self.sleep_func = sleep_func
         self.logger = _utils.pick_first_not_none(logger, LOG)
+        print("boom fasteners offset={}".format(offset))
+        print("boom fasteners lockfile={}".format(self.lockfile))
 
     @classmethod
     def make_offset_locks(cls, path, amount,
@@ -138,6 +140,7 @@ class _InterProcessLock(object):
             return True
 
     def _do_open(self):
+        print("open")
         basedir = os.path.dirname(self.path)
         if basedir:
             made_basedir = _ensure_tree(basedir)
@@ -148,8 +151,11 @@ class _InterProcessLock(object):
         # the target file. This eliminates the possibility of an attacker
         # creating a symlink to an important file in our lock path.
         if self.lockfile is None or self.lockfile.closed:
+            print("No lockfile")
             self.lockfile = open(self.path, 'a')
+            print("Opening {}".format(self.path))
             if self.offset is not None and self.offset >= 0:
+                print(self.offset)
                 self.lockfile.seek(self.offset)
 
     def acquire(self, blocking=True,
@@ -243,6 +249,7 @@ class _InterProcessLock(object):
                       use_offset=self.offset is not None)
 
     def unlock(self):
+        print("unlock")
         self._unlock(self.lockfile,
                      use_offset=self.offset is not None)
 
@@ -277,6 +284,7 @@ class _FcntlLock(_InterProcessLock):
     @staticmethod
     def _trylock(lockfile, use_offset=False):
         if use_offset:
+            print("lock file offset position: {}".format(lockfile.tell()))
             fcntl.lockf(lockfile, fcntl.LOCK_EX | fcntl.LOCK_NB, 1,
                         lockfile.tell(), os.SEEK_CUR)
         else:
